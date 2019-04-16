@@ -10,6 +10,7 @@ import logging
 import time
 import re
 import ConfigParser
+from functools import wraps
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, constants
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, RegexHandler, BaseFilter
 
@@ -31,6 +32,7 @@ username = parser.get('options', 'username')
 password = parser.get('options', 'password')
 port = parser.get('options', 'port')
 bot_id = parser.get('options', 'bot_id')
+LIST = parser.get('options', 'LIST')
 if len(sys.argv) > 1:
     username = sys.argv[1]
 if len(sys.argv) > 2:
@@ -43,11 +45,22 @@ api_path = "/api/cli"    # param
 url = server + api_path
 f = None
 
+def restricted(func):
+    @wraps(func)
+    def wrapped(bot, update):
+        user_id = update.effective_user.id
+        if str(user_id) not in LIST:
+            update.message.reply_text("Unauthorized access denied for {}.".format(user_id))
+            return
+        return func(bot, update)
+    return wrapped
+
 def help(bot, update):
         user_id = update.message.from_user.id
         chat_id = update.message.chat.id
         update.message.reply_text(user_id)
 
+@restricted
 def sessions(bot,update):
     post_data = {
       "commands": [

@@ -1,6 +1,3 @@
-#
-# Generated ASA REST API sample script - Python 2.7
-#
 import base64
 import json
 import sys
@@ -60,8 +57,8 @@ def help(bot, update):
         chat_id = update.message.chat.id
         update.message.reply_text(user_id)
 
-@restricted
-def sessions(bot,update):
+def get_sessions():
+    global r5
     post_data = {
       "commands": [
           "show vpn-sessiondb anyconnect | include Username|Assigned IP|Group Policy"
@@ -83,6 +80,23 @@ def sessions(bot,update):
         r3 = re.sub(r'Assigned IP', '', r2)
         r4 = re.sub(r'Public IP', '', r3)
         r5 = re.sub(' +', ' ', r4)
+        if status_code == 201:
+            print "Create was successful"
+    except urllib2.HTTPError, err:
+        print "Error received from server. HTTP Status code :"+str(err.code)
+        try:
+            json_error = json.loads(err.read())
+            if json_error:
+                print json.dumps(json_error,sort_keys=True,indent=4, separators=(',', ': '))
+        except ValueError:
+            pass
+    finally:
+        if f:  f.close()
+
+@restricted
+def sessions(bot,update):
+        global r5
+        get_sessions()
         parts = []
         while len(r5) > 0:
             if len(r5) > constants.MAX_MESSAGE_LENGTH:
@@ -103,18 +117,7 @@ def sessions(bot,update):
             msg = update.message.reply_text(part)
             time.sleep(1)
         return msg  # return only the last message
-        if status_code == 201:
-            print "Create was successful"
-    except urllib2.HTTPError, err:
-        print "Error received from server. HTTP Status code :"+str(err.code)
-        try:
-            json_error = json.loads(err.read())
-            if json_error:
-                print json.dumps(json_error,sort_keys=True,indent=4, separators=(',', ': '))
-        except ValueError:
-            pass
-    finally:
-        if f:  f.close()
+
 
 def error(bot, update, error):
     logger.warn('Update "%s" caused error "%s"' % (update, error))

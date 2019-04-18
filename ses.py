@@ -30,6 +30,8 @@ password = parser.get('options', 'password')
 port = parser.get('options', 'port')
 bot_id = parser.get('options', 'bot_id')
 LIST = parser.get('options', 'LIST')
+group1 = parser.get('options', 'group1')
+group2 = parser.get('options', 'group2')
 if len(sys.argv) > 1:
     username = sys.argv[1]
 if len(sys.argv) > 2:
@@ -74,7 +76,7 @@ def get_sessions():
         resp = f.read()
         r = str('%s' % (resp)).replace('{"response":["' ,'').replace('"]}', '').replace('\\n', '\n')
         r0 = re.sub(r'\nGroup Policy\s+[:]\s\w+\s+\w+\s\w+', '', r)
-        r0 = re.sub(r'[:]\sasavpn', '', r0)
+        r0 = re.sub(r'[:]\s%s' % (group1), '', r0)
         r1 = re.sub(r'Index\s+[:]\s\d+\n', '', r0)
         r2 = re.sub(r'Username\s+[:]\s', '', r1)
         r3 = re.sub(r'Assigned IP', '', r2)
@@ -99,7 +101,7 @@ def srv(bot,update):
         get_sessions()
         srv = "" 
         for line in r5.splitlines():
-            if re.search(r'asarem', line):
+            if re.search(r'%s' % (group2), line):
                 srv = srv + "\n" + line
         count = srv.count('\n')
         ssrv = '\n'.join(sorted(srv.splitlines()))

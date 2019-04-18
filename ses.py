@@ -8,7 +8,7 @@ import time
 import re
 import ConfigParser
 from functools import wraps
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, constants
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ChatAction, constants, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, RegexHandler, BaseFilter
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -94,9 +94,23 @@ def get_sessions():
         if f:  f.close()
 
 @restricted
+def srv(bot,update):
+        global r5
+        get_sessions()
+        srv = "" 
+        for line in r5.splitlines():
+            if re.search(r'asarem', line):
+                srv = srv + "\n" + line
+        count = srv.count('\n')
+        ssrv = '\n'.join(sorted(srv.splitlines()))
+        msg = update.message.reply_text('%s\n*Connected: %d*' % (ssrv,count), parse_mode='markdown')
+
+
+@restricted
 def sessions(bot,update):
         global r5
         get_sessions()
+        r5 = '\n'.join(sorted(r5.splitlines()))
         parts = []
         while len(r5) > 0:
             if len(r5) > constants.MAX_MESSAGE_LENGTH:
@@ -111,10 +125,10 @@ def sessions(bot,update):
             else:
                 parts.append(r5)
                 break
-
+        count = r5.count('\n')
         msg = None
         for part in parts:
-            msg = update.message.reply_text(part)
+            msg = update.message.reply_text('%s\n*Total: %d anyconnect sessions*' % (part,count), parse_mode='markdown')
             time.sleep(1)
         return msg  # return only the last message
 
@@ -127,6 +141,7 @@ def main():
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("help", help))
     dp.add_handler(CommandHandler("sessions", sessions))
+    dp.add_handler(CommandHandler("srv", srv))
     updater.start_polling()
     updater.idle()
 if __name__ == '__main__':

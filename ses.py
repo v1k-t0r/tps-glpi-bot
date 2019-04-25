@@ -53,15 +53,16 @@ def restricted(func):
         """wraper"""
         user_id = update.effective_user.id
         if str(user_id) not in LIST:
-            update.message.reply_text("Unauthorized access denied for {}.".format(user_id))
-            return
+            update.message.reply_text("Unauthorized access denied.\n"
+                                      "Please add {} in config.ini LIST variable".format(user_id))
+            return user_id
         return func(bot, update)
     return wrapped
 
+@restricted
 def start(bot, update):
     """Start function"""
-    chat_id = update.message.chat.id
-    update.message.reply_text(chat_id)
+    update.message.reply_text("Commands:\n/srv\n/sessions")
 
 def get_sessions():
     """Request to ASA API"""
@@ -117,7 +118,7 @@ def sessions(bot, update):
     response = get_sessions()
     response = '\n'.join(sorted(response.splitlines()))
     parts = []
-    while len(response) > 0:
+    while response:
         if len(response) > constants.MAX_MESSAGE_LENGTH:
             part = response[:constants.MAX_MESSAGE_LENGTH]
             first_lnbr = part.rfind('\n')
@@ -140,7 +141,7 @@ def sessions(bot, update):
 
 def error_func(bot, update, error):
     """error loging function"""
-    LOGGER.warn('Update "%s" caused error "%s"' % (update, error))
+    LOGGER.warn("Update %s caused error %s", update, error)
 
 def main():
     """TG updater function"""

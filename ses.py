@@ -49,18 +49,18 @@ URL = SERVER + API_PATH
 def restricted(func):
     """Restriction function"""
     @wraps(func)
-    def wrapped(bot, update):
+    def wrapped(_bot, update):
         """wraper"""
         user_id = update.effective_user.id
         if str(user_id) not in LIST:
             update.message.reply_text("Unauthorized access denied.\n"
                                       "Please add {} in config.ini LIST variable".format(user_id))
             return user_id
-        return func(bot, update)
+        return func(_bot, update)
     return wrapped
 
 @restricted
-def start(bot, update):
+def start(_bot, update):
     """Start function"""
     update.message.reply_text("Commands:\n/srv\n/sessions")
 
@@ -101,7 +101,7 @@ def get_sessions():
     return response
 
 @restricted
-def srv(bot, update):
+def srv(_bot, update):
     """Search GROUP2 session and send to tg"""
     response = get_sessions()
     ses = ""
@@ -113,7 +113,7 @@ def srv(bot, update):
     update.message.reply_text('%s\n*Connected: %d*' % (ssrv, count), parse_mode='markdown')
 
 @restricted
-def sessions(bot, update):
+def sessions(_bot, update):
     """Send sessions to tg"""
     response = get_sessions()
     response = '\n'.join(sorted(response.splitlines()))
@@ -139,7 +139,7 @@ def sessions(bot, update):
         time.sleep(1)
     return msg  # return only the last message
 
-def error_func(bot, update, error):
+def error_func(_bot, update, error):
     """error loging function"""
     LOGGER.warn("Update %s caused error %s", update, error)
 

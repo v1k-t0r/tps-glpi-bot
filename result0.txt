@@ -1,0 +1,7 @@
+* Running test suite 'test case'
+  - Running get_sessions test : [  OK  ]
+  - Running sessions test     : [  OK  ]
+  - Running srv test          : [  OK  ]
+Ran 3 tests, 3 succeeded, 0 failed (0 expected), 0 skipped
+
+Summary: Ran 3 tests, 3 succeeded, 0 failed (0 expected), 0 skipped

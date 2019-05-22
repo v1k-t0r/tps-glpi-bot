@@ -10,6 +10,7 @@ import ConfigParser
 from functools import wraps
 from telegram import constants
 from telegram.ext import Updater, CommandHandler
+from integrate import TestCase, test
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -45,6 +46,21 @@ HEADERS = {'Content-Type': 'application/json'}
 
 API_PATH = "/api/cli"    # param
 URL = SERVER + API_PATH
+
+class Test(TestCase):
+    "test case"
+    @test(skip_if_failed=["get_sessions_test"])
+    def sessions_test(self, check):
+        "sessions test"
+        check.is_not_none(sessions, message=None)
+    @test(skip_if_failed=["get_sessions_test"])
+    def srv_test(self, check):
+        "srv test"
+        check.is_not_none(srv, message=None)
+    @test()
+    def get_sessions_test(self, check):
+        "get_sessions test"
+        check.is_not_none(get_sessions, message=None)
 
 def restricted(func):
     """Restriction function"""

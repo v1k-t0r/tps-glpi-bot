@@ -21,8 +21,8 @@ LOGGER = logging.getLogger(__name__)
 Uncomment the following lines,
 if you are using Python 2.7.9 or above to connect to an ASA with a self-signed certificate.
 """
-# import ssl
-# ssl._create_default_https_context = ssl._create_unverified_context
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # Configuration
 PARSER = ConfigParser.ConfigParser()
@@ -87,6 +87,7 @@ def get_sessions():
     req = urllib2.Request(URL, json.dumps(post_data), HEADERS)
     base64string = base64.encodestring('%s:%s' % (USERNAME, PASSWORD)).replace('\n', '')
     req.add_header("Authorization", "Basic %s" % base64string)
+    con = None
     try:
         con = urllib2.urlopen(req)
         status_code = con.getcode()

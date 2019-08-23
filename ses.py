@@ -189,7 +189,7 @@ def msg(bot, update, args):
         update.message.reply_text('Empty message string\nUsage: /msg <message>')
     else:
         separator = ' '
-        arguments = '268 %s' % (separator.join(args))
+        arguments = '* %s' % (separator.join(args))
         for server in SERVERS:
             c = Client(server, username=MSGUSERNAME, password=MSGPASSWORD, encrypt=True)
             c.connect()

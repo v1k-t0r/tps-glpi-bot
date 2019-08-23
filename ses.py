@@ -1,3 +1,4 @@
+# encoding=utf8
 """Cisco ASA vpn clients list"""
 import base64
 import json
@@ -6,11 +7,14 @@ import urllib2
 import logging
 import time
 import re
+import ast
 import ConfigParser
 from functools import wraps
 from telegram import constants
 from telegram.ext import Updater, CommandHandler
 from integrate import TestCase, test
+from pypsexec.client import Client
+
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -18,7 +22,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 LOGGER = logging.getLogger(__name__)
 
 """
-Uncomment the following lines,
+Uncomment the following 2 lines,
 if you are using Python 2.7.9 or above to connect to an ASA with a self-signed certificate.
 """
 import ssl
@@ -47,6 +51,15 @@ HEADERS = {'Content-Type': 'application/json'}
 API_PATH = "/api/cli"    # param
 URL = SERVER + API_PATH
 
+# RDS
+SERVERS = ast.literal_eval(PARSER.get('options', 'servers'))
+MSGUSERNAME = PARSER.get('options', 'msg_username')
+MSGPASSWORD = PARSER.get('options', 'msg_password')
+EXECUTABLE = PARSER.get('options', 'executable')
+MSGLIST = PARSER.get('options', 'MSGLIST')
+
+
+
 class Test(TestCase):
     "test case"
     @test(skip_if_failed=["get_sessions_test"])
@@ -70,10 +83,23 @@ def restricted(func):
         user_id = update.effective_user.id
         if str(user_id) not in LIST:
             update.message.reply_text("Unauthorized access denied.\n"
-                                      "Please add {} in config.ini LIST variable".format(user_id))
+                                      "Please add *{}* in config.ini LIST variable".format(user_id), parse_mode='markdown')
             return user_id
         return func(_bot, update)
     return wrapped
+
+def restricted_msg(func):
+    """Message restriction function"""
+    @wraps(func)
+    def wrapped1(_bot, update, args):
+        """wraper"""
+        user_id = update.effective_user.id
+        if str(user_id) not in MSGLIST:
+            update.message.reply_text("Unauthorized access denied.\n"
+                                      "Please add *{}* in config.ini MSGLIST variable".format(user_id), parse_mode='markdown')
+            return user_id
+        return func(_bot, update, args)
+    return wrapped1
 
 @restricted
 def start(_bot, update):
@@ -156,6 +182,28 @@ def sessions(_bot, update):
         time.sleep(1)
     return msg  # return only the last message
 
+@restricted_msg
+def msg(bot, update, args):
+    """send message to terminal users"""
+    if not args:
+        update.message.reply_text('Empty message string\nUsage: /msg <message>')
+    else:
+        separator = ' '
+        arguments = '268 %s' % (separator.join(args))
+        for server in SERVERS:
+            c = Client(server, username=MSGUSERNAME, password=MSGPASSWORD, encrypt=True)
+            c.connect()
+            try:
+                c.create_service()
+                result = c.run_executable(EXECUTABLE, arguments=arguments)
+            finally:
+                c.remove_service()
+                c.disconnect()
+
+        #print("STDOUT:\n%s" % result[0].decode('utf-8') if result[0] else "")
+        #print("STDERR:\n%s" % result[1].decode('utf-8') if result[1] else "")
+        print("RC: %d" % result[2])
+    
 def error_func(_bot, update, error):
     """error loging function"""
     LOGGER.warn("Update %s caused error %s", update, error)
@@ -167,6 +215,7 @@ def main():
     dsp.add_handler(CommandHandler("start", start))
     dsp.add_handler(CommandHandler("sessions", sessions))
     dsp.add_handler(CommandHandler("srv", srv))
+    dsp.add_handler(CommandHandler("msg", msg, pass_args=True))
     updater.start_polling()
     updater.idle()
 if __name__ == '__main__':
